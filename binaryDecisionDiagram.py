@@ -1,29 +1,38 @@
+#Trieda jednej nody
 class Node:
-    def __init__(self, val):
-        self.l = None
-        self.r = None
-        self.v = val
-        
-    def getLeftChild(self):
-        return self.left
-    def getRightChild(self):
-        return self.right
-    def setNodeValue(self,value):
-        self.rootid = value
-    def getNodeValue(self):
-        return self.v
-    def insertRight(self,newNode):
-        if self.right == None:
-            self.right = BinaryTree(newNode)
-        else:
-            tree = BinaryTree(newNode)
-            tree.right = self.right
-            self.right = tree
-        
-    def insertLeft(self,newNode):
-        if self.left == None:
-            self.left = BinaryTree(newNode)
-        else:
-            tree = BinaryTree(newNode)
-            tree.left = self.left
-            self.left = tree    
+    def __init__(self, value):
+        self.left = None
+        self.right = None
+        self.value = value
+#Vypise vsetky zaporne prvky
+def leftString(funkcie):
+    nonA = ""
+    for item in funkcie:
+        if item.find("!A")==0:
+            if len(item)==2:
+                item.replace("!A",'')
+            else:
+                item.replace("!A.",'')
+            nonA = nonA + item + ' ' 
+    if item.find("A")==-1:
+        nonA = nonA + item + ' '   
+    return nonA
+#Vypise vsetky kladne prvky
+def rightString(funkcie):
+    posA = ""
+    for item in funkcie:
+        if item.find("A")==0:
+            if len(item)==1:
+                item.replace('A','')
+            else:
+                item.replace('A.','')
+            posA = posA + item + ' '
+        if item.find("A")==-1:
+            posA = posA + item + ' '
+    return posA
+
+bfunkcia = input('Zadaj funkciu v DNF:\n')
+funkcie = bfunkcia.split('+')
+#poradie = input('Zadaj poraadie funkcie:\n')
+
+print(leftString(funkcie) + '\n' + rightString(funkcie))
