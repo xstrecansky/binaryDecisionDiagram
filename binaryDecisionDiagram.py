@@ -4,35 +4,39 @@ class Node:
         self.left = None
         self.right = None
         self.value = value
+#Trida binarneho rozhodovacieho diagramu
+class BDD:
+    def __init__(self) -> None:
+        pass
 #Vypise vsetky zaporne prvky
-def leftString(funkcie):
+def leftString(fList, letter):
     nonA = ""
-    for item in funkcie:
-        if item.find("!A")==0:
-            if len(item)==2:
-                item.replace("!A",'')
-            else:
-                item.replace("!A.",'')
-            nonA = nonA + item + ' ' 
-    if item.find("A")==-1:
-        nonA = nonA + item + ' '   
+    for item in fList:
+        if len(item)==2:
+            new = item.replace('!'+letter,'')
+        else:
+            new = item.replace('!'+letter+'.','')
+        if item.find('!'+letter)==0:
+            nonA = nonA + new + ' ' 
+        if item.find(letter)==-1:
+            nonA = nonA + item + ' '   
     return nonA
 #Vypise vsetky kladne prvky
-def rightString(funkcie):
+def rightString(fList, letter):
     posA = ""
-    for item in funkcie:
-        if item.find("A")==0:
-            if len(item)==1:
-                item.replace('A','')
-            else:
-                item.replace('A.','')
-            posA = posA + item + ' '
-        if item.find("A")==-1:
+    for item in fList:
+        if len(item)==1:
+            new = item.replace(letter,'')
+        else:
+            new = item.replace(letter+'.','')
+        if item.find(letter)==0:
+            posA = posA + new + ' '
+        if item.find(letter)==-1:
             posA = posA + item + ' '
     return posA
 
 bfunkcia = input('Zadaj funkciu v DNF:\n')
-funkcie = bfunkcia.split('+')
-#poradie = input('Zadaj poraadie funkcie:\n')
+fList = bfunkcia.split('+')
+poradie = input('Zadaj poraadie fList:\n')
 
-print(leftString(funkcie) + '\n' + rightString(funkcie))
+print(leftString(fList,poradie[0]) + '\n' + rightString(fList,poradie[0]))
