@@ -13,10 +13,11 @@ class BDD(object):
 #Vypise vsetky zaporne prvky
 def leftString(fList, letter):
     #Pripad kedy mame !C v lavej strane -> vzdy 1
+    nonA = []
     if '!'+letter in fList:
-        return '1'
+        nonA.append('1')
+        return nonA
     else:
-        nonA = []
         for item in fList:
             #Pripad kedy sa nachadza vo funkcii !C
             if item.find('!'+letter)==0:
@@ -36,10 +37,11 @@ def leftString(fList, letter):
 #Vypise vsetky kladne prvky
 def rightString(fList, letter):
     #Pripad kedy mame C v pravej strane -> vzdy 1
+    posA = []
     if letter in fList:
-        return '1'
+        posA.append('1')
+        return posA
     else:
-        posA = []
         for item in fList:
             #Pripad kedy sa nachadza vo funkcii C
             if item.find(letter)==0 and item[0]!='!':
@@ -65,20 +67,20 @@ def preorder(root):
     return root
 #Funkcia na vytvorenie binarneho diagramu
 def BDD_create(root, poradie):
-    if len(poradie)==0:
-        return None
-    root.left = Node((leftString(root.value,poradie[0])))
-    root.right = Node((rightString(root.value,poradie[0])))
-    root.left = BDD_create(root.left, poradie[1:])
-    root.right = BDD_create(root.right, poradie[1:])
-    return root
+    if poradie:
+        root.left = Node((leftString(root.value,poradie[0])))
+        root.right = Node((rightString(root.value,poradie[0])))
+        root.left = BDD_create(root.left, poradie[1:])
+        root.right = BDD_create(root.right, poradie[1:])
+        return root
+    return None
 #Zadavame v tvare A!C+ABC+!AB+!BC
 #bfunkcia = input('Zadaj funkciu v DNF:\n')
 bfunkcia = "A!C+ABC+!AB+!BC"
 fList = bfunkcia.split('+')
 #Zadavame v tvare ABCDE
-#poradie = input('Zadaj poraadie fList:\n')
-poradie = "ABC"
+#poradie = input('Zadaj poradie fList:\n')
+poradie = "ABC_"
 bddroot = BDD(poradie, fList)
 bddroot.root = BDD_create(bddroot.root, poradie)
 preorder(bddroot.root)
