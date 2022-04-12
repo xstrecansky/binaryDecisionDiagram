@@ -1,26 +1,72 @@
 COUNT = [10]
 #Trieda jednej nody
 class Node(object):
-    def __init__(self, value):
+    def __init__(self, value, id):
         self.left = None
         self.right = None
         self.value = value
-    #Count the number of nodes in binary search tree
-    def count(self):
-        if self.left is None and self.right is None:
-            return 1
-        elif self.left is None:
-            return 1 + self.right.count()
-        elif self.right is None:
-            return 1 + self.left.count()
-        else:
-            return 1 + self.left.count() + self.right.count()
+        #Unikatne id na pocitanie poctu prvkov
+        self.id = id
+    #Inorder binary tree traversal
+    def inorder(self):
+        if self.left:
+            self.left.inorder()
+        print(self.value)
+        if self.right:
+            self.right.inorder()
+    #Rekurzivne prejdeme vsetky, prvky a ak najdeme vstupnu hodnotu, vratime nodu
+    def checkForDuplicates(self, value):
+        if value == self.value:
+            return self
+        if self.left:
+            return self.left.checkForDuplicates(value)
+        if self.right:
+            return self.right.checkForDuplicates(value)
+        return None
+
 #Trida binarneho rozhodovacieho diagramu
 class BDD(object):
     def __init__(self, poradie, fList):
-        self.root = Node(fList)
-        self.values = 0
+        self.root = Node(fList, 1)
+        self.values = 1
         self.poradie = poradie
+    def incValues(self):
+        self.values += 1
+        return self.values
+    def getValues(self):
+        return self.values
+    #Funckia na vytvorenie binarneho diagramu
+    #Bez oplimalizacie a odstranenia duplikatov
+    def BDD_createWithDuplicates(self, root, poradie):
+        if poradie:
+            root.left = Node(leftString(root.value,poradie[0]), self.incValues())
+            root.left = self.BDD_createWithDuplicates(root.left, poradie[1:])
+            root.right = Node(rightString(root.value,poradie[0]), self.incValues())
+            root.right = self.BDD_createWithDuplicates(root.right, poradie[1:])
+            return root
+        return None
+    #Funkcia na vytvorenie binarneho diagramu
+    def BDD_create(self, root, poradie):
+        if poradie:
+            #TODO:
+            if '1' not in root.value and '0' not in root.value:
+                tempLeftString = leftString(root.value,poradie[0])
+                tempRightString = rightString(root.value,poradie[0])
+                if root.checkForDuplicates(tempLeftString) == None:
+                    root.left = Node(tempLeftString, self.incValues())
+                    root.left = self.BDD_create(root.left, poradie[1:])
+                #Ak najdeme duplikat, nastavime ho ako smernik na lavy prvok
+                else:
+                    root.left = root.checkForDuplicates(tempLeftString)
+                if root.checkForDuplicates(tempRightString) == None:
+                    root.right = Node(tempRightString, self.incValues())
+                    root.right = self.BDD_create(root.right, poradie[1:])
+                #Ak najdeme duplikat, nastavime ho ako smernik na pravy prvok
+                else:
+                    root.right = root.checkForDuplicates(tempRightString)
+            return root
+        return None
+    #Metoda pre vypis vysledku
     def BDD_use(self, combination):
         tempRoot = self.root
         for letter in combination:
@@ -29,6 +75,9 @@ class BDD(object):
                 #v pripade rovnakeho praveho a laveho prvku ulozime iba pravy
                 if tempRoot.left:
                     tempRoot = tempRoot.left
+                else:
+                    if tempRoot.right:
+                        tempRoot = tempRoot.right
             else:
                 tempRoot = tempRoot.right
         print(tempRoot.value)
@@ -93,33 +142,25 @@ def print2DUtil(root, space) :
     print()
     for i in range(COUNT[0], space):
         print(end = " ")
-    print(root.value)
+    print(root.value, end = " ,id: ")
+    print(str(root.id))
     print2DUtil(root.left, space)
-#Funkcia na vytvorenie binarneho diagramu
-def BDD_create(root, poradie):
-    if poradie:
-        if '0' not in root.value and '1' not in root.value:
-            tempLeftString = leftString(root.value,poradie[0])
-            tempRightString = rightString(root.value,poradie[0])
-            #Ak nenajdeme duplikat v pravej a lavej strane
-            if tempLeftString != tempRightString:
-                root.left = Node(tempLeftString)
-                root.left = BDD_create(root.left, poradie[1:])
-            root.right = Node(tempRightString) 
-            root.right = BDD_create(root.right, poradie[1:])
-        return root
-    return None
-
 #Zadavame v tvare A!C+ABC+!AB+!BC
 while(True):
-    bfunkcia = input('Zadaj funkciu v DNF:\n')
-    fList = bfunkcia.split('+')
+    fList = input('Zadaj funkciu v DNF:\n').split('+')
     #Zadavame v tvare ABCDE
-    poradie = input('Zadaj poradie:\n')
-    poradie = poradie + " "
+    poradie = input('Zadaj poradie:\n')+ " "
+    #Testujeme pre optimalizovy diagram
     bddroot = BDD(poradie, fList)
-    bddroot.root = BDD_create(bddroot.root, poradie)
+    bddroot.root = bddroot.BDD_create(bddroot.root, poradie)
     bddroot.print2D()
-    print(bddroot.root.count())
+    print(bddroot.getValues())
+    """
+    print("--------------------------------------------------------------------------------\n")
+    #Testujeme pre neoptimalizovany diagram
+    bad = BDD(poradie, fList)
+    bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+    bad.print2D()
+    """
     kombinacia = input('Zadaj kombinaciu:\n')
     bddroot.BDD_use(kombinacia)
