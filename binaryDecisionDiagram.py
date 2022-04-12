@@ -5,6 +5,16 @@ class Node(object):
         self.left = None
         self.right = None
         self.value = value
+    #Count the number of nodes in binary search tree
+    def count(self):
+        if self.left is None and self.right is None:
+            return 1
+        elif self.left is None:
+            return 1 + self.right.count()
+        elif self.right is None:
+            return 1 + self.left.count()
+        else:
+            return 1 + self.left.count() + self.right.count()
 #Trida binarneho rozhodovacieho diagramu
 class BDD(object):
     def __init__(self, poradie, fList):
@@ -22,6 +32,9 @@ class BDD(object):
             else:
                 tempRoot = tempRoot.right
         print(tempRoot.value)
+    #Spusti vypisanie 2D prvkov
+    def print2D(self):
+        print2DUtil(self.root, 0)
 #Vypise vsetky zaporne prvky
 def leftString(fList, letter):
     #Pripad kedy mame !C v lavej strane -> vzdy 1
@@ -70,8 +83,7 @@ def rightString(fList, letter):
             return posA
         #Odstranime duplikaty
         return list(dict.fromkeys(posA))
-#Vypisanie stromu 2D
-#Skopirovane z internetu
+#Vypisanie stromu 2D z internetu
 #https://www.geeksforgeeks.org/print-binary-tree-2-dimensions/
 def print2DUtil(root, space) :
     if (root == None) :
@@ -83,8 +95,6 @@ def print2DUtil(root, space) :
         print(end = " ")
     print(root.value)
     print2DUtil(root.left, space)
-def print2D(root):
-    print2DUtil(root, 0)
 #Funkcia na vytvorenie binarneho diagramu
 def BDD_create(root, poradie):
     if poradie:
@@ -99,6 +109,7 @@ def BDD_create(root, poradie):
             root.right = BDD_create(root.right, poradie[1:])
         return root
     return None
+
 #Zadavame v tvare A!C+ABC+!AB+!BC
 while(True):
     bfunkcia = input('Zadaj funkciu v DNF:\n')
@@ -108,6 +119,7 @@ while(True):
     poradie = poradie + " "
     bddroot = BDD(poradie, fList)
     bddroot.root = BDD_create(bddroot.root, poradie)
-    print2D(bddroot.root)
+    bddroot.print2D()
+    print(bddroot.root.count())
     kombinacia = input('Zadaj kombinaciu:\n')
     bddroot.BDD_use(kombinacia)
