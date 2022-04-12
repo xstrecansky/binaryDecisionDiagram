@@ -1,3 +1,4 @@
+COUNT = [10]
 #Trieda jednej nody
 class Node(object):
     def __init__(self, value):
@@ -10,6 +11,17 @@ class BDD(object):
         self.root = Node(fList)
         self.values = 0
         self.poradie = poradie
+    def BDD_use(self, combination):
+        tempRoot = self.root
+        for letter in combination:
+            if letter =='0':
+                #Pozrieme sa ci vobec existuje lavy prvok kezde
+                #v pripade rovnakeho praveho a laveho prvku ulozime iba pravy
+                if tempRoot.left:
+                    tempRoot = tempRoot.left
+            else:
+                tempRoot = tempRoot.right
+        print(tempRoot.value)
 #Vypise vsetky zaporne prvky
 def leftString(fList, letter):
     #Pripad kedy mame !C v lavej strane -> vzdy 1
@@ -58,29 +70,44 @@ def rightString(fList, letter):
             return posA
         #Odstranime duplikaty
         return list(dict.fromkeys(posA))
-#Preorder vypisanie stromu
-def preorder(root): 
-    if root:
-        print(root.value)
-        preorder(root.left)
-        preorder(root.right)
-    return root
+#Vypisanie stromu 2D
+#Skopirovane z internetu
+#https://www.geeksforgeeks.org/print-binary-tree-2-dimensions/
+def print2DUtil(root, space) :
+    if (root == None) :
+        return
+    space += COUNT[0]
+    print2DUtil(root.right, space)
+    print()
+    for i in range(COUNT[0], space):
+        print(end = " ")
+    print(root.value)
+    print2DUtil(root.left, space)
+def print2D(root):
+    print2DUtil(root, 0)
 #Funkcia na vytvorenie binarneho diagramu
 def BDD_create(root, poradie):
     if poradie:
-        root.left = Node((leftString(root.value,poradie[0])))
-        root.right = Node((rightString(root.value,poradie[0])))
-        root.left = BDD_create(root.left, poradie[1:])
-        root.right = BDD_create(root.right, poradie[1:])
+        if '0' not in root.value and '1' not in root.value:
+            tempLeftString = leftString(root.value,poradie[0])
+            tempRightString = rightString(root.value,poradie[0])
+            #Ak nenajdeme duplikat v pravej a lavej strane
+            if tempLeftString != tempRightString:
+                root.left = Node(tempLeftString)
+                root.left = BDD_create(root.left, poradie[1:])
+            root.right = Node(tempRightString) 
+            root.right = BDD_create(root.right, poradie[1:])
         return root
     return None
 #Zadavame v tvare A!C+ABC+!AB+!BC
-#bfunkcia = input('Zadaj funkciu v DNF:\n')
-bfunkcia = "A!C+ABC+!AB+!BC"
-fList = bfunkcia.split('+')
-#Zadavame v tvare ABCDE
-#poradie = input('Zadaj poradie fList:\n')
-poradie = "ABC_"
-bddroot = BDD(poradie, fList)
-bddroot.root = BDD_create(bddroot.root, poradie)
-preorder(bddroot.root)
+while(True):
+    bfunkcia = input('Zadaj funkciu v DNF:\n')
+    fList = bfunkcia.split('+')
+    #Zadavame v tvare ABCDE
+    poradie = input('Zadaj poradie:\n')
+    poradie = poradie + " "
+    bddroot = BDD(poradie, fList)
+    bddroot.root = BDD_create(bddroot.root, poradie)
+    print2D(bddroot.root)
+    kombinacia = input('Zadaj kombinaciu:\n')
+    bddroot.BDD_use(kombinacia)
