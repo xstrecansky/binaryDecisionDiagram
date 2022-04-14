@@ -37,53 +37,69 @@ class BDD(object):
         if poradie:
             tempLeft = leftString(root.value,poradie[0])
             tempRight = rightString(root.value,poradie[0])
-            if root.value == tempLeft and root.value == tempRight:
+            #Pripad kedy je root rovnaky s pravou a lavou stranou
+            #Prejdeme na dalsiu instanciu
+            if(root.value == tempLeft and root.value == tempRight):
+                return root
+                #Musime sa nachadzat na konci BDD -> vratime None
+                if ('1' or '0') in root.value:
+                    return root
+                #Inak prejdeme poradie a lavy a pravy prvok
                 poradie = poradie[1:]
                 tempLeft = leftString(tempLeft, poradie[0])
                 tempRight = rightString(tempRight, poradie[0])
+            #Ak mame pravu a lavu stranu rovnaku 
             if tempLeft == tempRight:
-                if ('1' or '0') in tempLeft:
-                    answerRoot = checkForDuplicates(self.root, tempLeft)
-                    if answerRoot:
-                        root.left = answerRoot
-                        root.right = root.left
-                else:
-                    root.left = Node(tempLeft, self.incValues())
-                    root.right = root.left
-                    root.left = self.BDD_create(root.left, poradie[1:])
-                return root
-            if ('1' or '0') in tempLeft:
-                answerRoot = checkForDuplicates(self.root, tempLeft)
+                answerRoot = checkForDuplicates(self.root, tempLeft, None)
+                #Ak sa hodnota uz nachadza v strome iba ju nastavime ako lavy prvok
                 if answerRoot:
                     root.left = answerRoot
                 else:
-                    root.left = Node(tempLeft, self.incValues())
+                    #Ak sa v nom nachadza 1 alebo 0 -> nepokracujeme v nasledovnom vytvarani
+                    if ('1' or '0') in tempLeft:
+                        root.left = Node(tempLeft, self.incValues())
+                    else:
+                        root.left = Node(tempLeft, self.incValues())
+                        root.left = self.BDD_create(root.left, poradie[1:])
+                root.right = root.left
+                return root
             else:
-                root.left = Node(tempLeft, self.incValues())
-                root.left = self.BDD_create(root.left, poradie[1:])
-            if ('1' or '0') in tempRight:
-                answerRoot = checkForDuplicates(self.root, tempRight)
+                #Obycajny pripad, najprv sa pozrieme na lavy prvok
+                answerRoot = checkForDuplicates(self.root, tempLeft, None)
+                #Ak sa hodnota uz nachadza v strome iba ju nastavime ako lavy prvok
                 if answerRoot:
-                    root.right = answerRoot
+                    root.left = answerRoot
                 else:
-                    root.right = Node(tempRight, self.incValues())
-            else:
-                root.right = Node(tempRight, self.incValues())
-                root.right = self.BDD_create(root.right, poradie[1:])
-            return root
+                    #Ak sa v nom nachadza 1 alebo 0 -> nepokracujeme v nasledovnom vytvarani
+                    if ('1' or '0') in tempLeft:
+                        root.left = Node(tempLeft, self.incValues())
+                    else:
+                        root.left = Node(tempLeft, self.incValues())
+                        root.left = self.BDD_create(root.left, poradie[1:])
+                #Obycajny pripad, najprv sa pozrieme na pravy prvok
+                answerLeftRoot = checkForDuplicates(self.root, tempRight, None)
+                if answerLeftRoot:
+                    root.right = answerLeftRoot
+                else:
+                    #Ak sa v nom nachadza 1 alebo 0 -> nepokracujeme v nasledovnom vytvarani
+                    if ('1' or '0') in tempRight:
+                        root.right = Node(tempRight, self.incValues())
+                    else:
+                        root.right = Node(tempRight, self.incValues())
+                        root.right = self.BDD_create(root.right, poradie[1:])
         return root
     #Metoda pre vypis vysledku
     def BDD_use(self, combination):
         tempRoot = self.root
         for letter in combination:
-            if not tempRoot.right and not tempRoot.left:
+            if not tempRoot.right:
                 print(tempRoot.value)
                 return
             if letter =='0':
                 #Pozrieme sa ci vobec existuje lavy prvok kezde
                 #v pripade rovnakeho praveho a laveho prvku ulozime iba pravy
                 tempRoot = tempRoot.left
-            if letter =='1':
+            elif letter =='1':
                 tempRoot = tempRoot.right
             #Chyba
             else:
@@ -142,14 +158,17 @@ def rightString(fList, letter):
         #Odstranime duplikaty
         return list(dict.fromkeys(posA))
 #Rekurzivne prejdeme vsetky, prvky a ak najdeme vstupnu hodnotu, vratime nodu
-def checkForDuplicates(root, value):
+def checkForDuplicates(root, value, temp):
+    if temp:
+        return temp
     if root:
         if value == root.value:
-            return root
+            temp = root
         if root.left:
-            return checkForDuplicates(root.left, value)
+            temp = checkForDuplicates(root.left, value, temp)
         if root.right:
-            return checkForDuplicates(root.right, value)
+            temp = checkForDuplicates(root.right, value, temp)
+        return temp
 #Vypisanie stromu 2D z internetu
 #https://www.geeksforgeeks.org/print-binary-tree-2-dimensions/
 def print2DUtil(root, space):
@@ -177,9 +196,6 @@ while(True):
     #bad = BDD(poradie, fList)
     #bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
     #bad.print2D()
-    while(True):
-        hodnota = []
-        hodnota.append(input('Zadaj hodnotu:\n'))
-        print(checkForDuplicates(bddroot.root, hodnota))
+    
     kombinacia = input('Zadaj kombinaciu:\n')
     bddroot.BDD_use(kombinacia)
