@@ -146,16 +146,19 @@ class BDD(object):
             if not tempRoot.right:
                 print(tempRoot.value)
                 return
-            if letter =='0':
-                #Pozrieme sa ci vobec existuje lavy prvok kezde
-                #v pripade rovnakeho praveho a laveho prvku ulozime iba pravy
-                tempRoot = tempRoot.left
-            elif letter =='1':
-                tempRoot = tempRoot.right
-            #Chyba
+            if letter in listToString(tempRoot.value):
+                if letter =='0':
+                    #Pozrieme sa ci vobec existuje lavy prvok kezde
+                    #v pripade rovnakeho praveho a laveho prvku ulozime iba pravy
+                    tempRoot = tempRoot.left
+                elif letter =='1':
+                    tempRoot = tempRoot.right
+                #Chyba
+                else:
+                    print('-1')
+                    return
             else:
-                print('-1')
-                return
+                continue
         return tempRoot.value
     #Spusti vypisanie 2D prvkov
     def print2D(self):
@@ -234,6 +237,7 @@ def print2DUtil(root, space):
     print(root.value, end = " ,id: ")
     print(str(root.id))
     print2DUtil(root.left, space)
+#Metoda na porovnanie hodnot dvoch BDD
 def compareBDD(bdd1, bdd2, text, size):
     if len(text)<=size:
             compareBDD(bdd1,bdd2,text+"0",size)
@@ -242,6 +246,7 @@ def compareBDD(bdd1, bdd2, text, size):
                     print("Nesedi")
                     return False
             compareBDD(bdd1,bdd2,text+"1",size)
+
 #Metoda na vytvorenie nahodnej boolovskej funkcie
 """
 def createRandomFunction():
@@ -268,6 +273,12 @@ def getPoradie(bfunckia):
         if pismeno in bfunckia:
             poradie += pismeno
     return poradie
+#Metoda nam vrati string z array listu
+def listToString(fList):
+    s =""
+    for item in fList:
+        s+=item
+    return s
 #Zadavame v tvare A!C+ABC+!AB+!BC
 while(True):
     bfunkcia = input('Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n')
@@ -294,7 +305,6 @@ while(True):
         bdd.root = bdd.BDD_create(bdd.root, poradie, temp)
         bdd.root.display()
     #compareBDD(bad, bddroot, '', len(poradie))
-    
-    kombinacia = input('Zadaj kombinaciu:\n')
-    #bddroot.BDD_use(kombinacia)
     """
+    print(bddroot.BDD_use(input('Zadaj kombinaciu:\n')))
+    
