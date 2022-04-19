@@ -19,14 +19,14 @@ Riešenie kombinácie:
 
 
 
-                ______________['AB', 'C'],id:1_____________________________________                  
-               /                                                                  	\                 
-      ____['C'],id:2_____                                    				 ______________['B', 'C'],id:5_____     
-     /                   \                                   				/                                  \    
-['0'],id:3          ['1'],id:4                     				    ____['C'],id:2_____                     ['1'],id:4
-                                                				    /    	                    \                             
-                                              					['0'],id:3          ['1'],id:4               
-
+#                ______________['AB', 'C'],id:1_____________________________________                  
+#               /                                                                  	\                 
+#      ____['C'],id:2_____                                    				 ______________['B', 'C'],id:5_____     
+#     /                   \                                   				/                                  \    
+#['0'],id:3          ['1'],id:4                     				    ____['C'],id:2_____                     ['1'],id:4
+#                                                				    /    	               \                             
+#                                              					['0'],id:3          ['1'],id:4               
+#
   
 •	Ako prvé prejdeme do ľavej hodnoty C keďže keď za A dosadíme 0 dostaneme C. Ďalej keď dosadíme za B 1 ostaneme stále v rovnakom uzle a až podľa hodnoty C ovplyvníme výsledok
 •	Takto dokážeme korektne redukovať strom na najmenšie množstvo prvkov
