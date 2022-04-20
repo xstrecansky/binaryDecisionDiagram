@@ -3,13 +3,14 @@ import random
 
 # Trieda jednej nody
 class Node(object):
-    def __init__(self, value, id):
+    def __init__(self, value, i):
         self.left = None
         self.right = None
         self.value = value
         # Unikatne id na pocitanie poctu prvkov
-        self.id = id
+        self.id = i
 
+    # Kod prezaty z https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
@@ -61,26 +62,30 @@ class BDD(object):
         self.root = Node(fList, 1)
         self.values = 1
         self.poradie = poradie
+        self.pocetPremennych = len(poradie)
 
-    def incValues(self):
-        self.values += 1
+    def incValues(self, i):
+        self.values += i
         return self.values
 
     # Vypiseme vsetky hodnoty pomocou BDD_use
-    def everynumber(self, text, size):
+    def everynumber(self, text, size, array):
         if len(text) <= size:
-            self.everynumber(text + "0", size)
+            self.everynumber(text + "0", size, array)
             if len(text) == size:
-                self.BDD_use(text)
-            self.everynumber(text + "1", size)
+                array.append(self.BDD_use(text))
+            self.everynumber(text + "1", size, array)
+        if len(text) == size and "0" not in text:
+            print(array)
+            return
 
     # Funckia na vytvorenie binarneho diagramu
     # Bez oplimalizacie a odstranenia duplikatov
     def BDD_createWithDuplicates(self, root, poradie):
         if poradie:
-            root.left = Node(leftString(root.value, poradie[0]), self.incValues())
+            root.left = Node(leftString(root.value, poradie[0]), self.incValues(1))
             root.left = self.BDD_createWithDuplicates(root.left, poradie[1:])
-            root.right = Node(rightString(root.value, poradie[0]), self.incValues())
+            root.right = Node(rightString(root.value, poradie[0]), self.incValues(1))
             root.right = self.BDD_createWithDuplicates(root.right, poradie[1:])
             return root
         return root
@@ -95,7 +100,9 @@ class BDD(object):
                 tempRoot = tempRoot.right
             else:
                 return "-1"
-        return tempRoot.value
+        if "1" in tempRoot.value:
+            return "1"
+        return "0"
 
     # Funkcia na vytvorenie binarneho diagramu
     def BDD_create(self, root, poradie, bfunkcia):
@@ -114,10 +121,10 @@ class BDD(object):
                     root.left = answerRoot
                 else:
                     # Ak sa v nom nachadza 1 alebo 0 -> nepokracujeme v nasledovnom vytvarani
-                    if ("1" or "0") in tempLeft:
-                        root.left = Node(tempLeft, self.incValues())
+                    if "1" in tempLeft or "0" in tempLeft:
+                        root.left = Node(tempLeft, self.incValues(1))
                     else:
-                        root.left = Node(tempLeft, self.incValues())
+                        root.left = Node(tempLeft, self.incValues(1))
                         root.left = self.BDD_create(root.left, poradie[1:], tempLeft)
                 root.right = root.left
             else:
@@ -128,10 +135,10 @@ class BDD(object):
                     root.left = answerRoot
                 else:
                     # Ak sa v nom nachadza 1 alebo 0 -> nepokracujeme v nasledovnom vytvarani
-                    if ("1" or "0") in tempLeft:
-                        root.left = Node(tempLeft, self.incValues())
+                    if "1" in tempLeft or "0" in tempLeft:
+                        root.left = Node(tempLeft, self.incValues(1))
                     else:
-                        root.left = Node(tempLeft, self.incValues())
+                        root.left = Node(tempLeft, self.incValues(1))
                         root.left = self.BDD_create(root.left, poradie[1:], tempLeft)
                 # Obycajny pripad, najprv sa pozrieme na pravy prvok
                 answerLeftRoot = checkForDuplicates(self.root, tempRight, None)
@@ -139,17 +146,18 @@ class BDD(object):
                     root.right = answerLeftRoot
                 else:
                     # Ak sa v nom nachadza 1 alebo 0 -> nepokracujeme v nasledovnom vytvarani
-                    if ("1" or "0") in tempRight:
-                        root.right = Node(tempRight, self.incValues())
+                    if "1" in tempRight or "0" in tempRight:
+                        root.right = Node(tempRight, self.incValues(1))
                     else:
-                        root.right = Node(tempRight, self.incValues())
+                        root.right = Node(tempRight, self.incValues(1))
                         root.right = self.BDD_create(root.right, poradie[1:], tempRight)
             # Na konci sa pozrieme na rovnake hodnoty v jednej node
             # Ak sa obe rovnaju 1 alebo 0 nemusime zapisovat aktualnu nodu
-            if ("0" or "1") not in root.value:
+            if "0" not in root.value and "1" not in root.value:
                 if root.left.value == root.right.value:
-                    if ("1" or "0") in root.left.value:
+                    if "0" in root.left.value or "1" in root.left.value:
                         root = root.left
+                        self.incValues(-1)
         return root
 
     # Metoda pre vypis vysledku
@@ -157,8 +165,10 @@ class BDD(object):
         tempRoot = self.root
         for i in range(0, len(combination)):
             number = combination[i]
-            if ("0" or "1") in tempRoot.value:
-                return tempRoot.value
+            if "1" in tempRoot.value:
+                return "1"
+            if "0" in tempRoot.value:
+                return "0"
             if self.poradie[i] in listToString(tempRoot.value):
                 if number == "0":
                     tempRoot = tempRoot.left
@@ -168,7 +178,9 @@ class BDD(object):
                     return "-1"
             else:
                 continue
-        return tempRoot.value
+        if "1" in tempRoot.value:
+            return "1"
+        return "0"
 
     # Spusti vypisanie 2D prvkov
     def print2D(self):
@@ -210,6 +222,9 @@ def rightString(fList, letter):
         return posA
     else:
         for item in fList:
+            if item.find("!" + letter) == 0:
+                posA.append("")
+                continue
             # Pripad kedy sa nachadza vo funkcii C
             if item.find(letter) == 0 and item[0] != "!":
                 # Odstranime pismeno a pridame do listu
@@ -221,7 +236,7 @@ def rightString(fList, letter):
         if "" in posA:
             posA.remove("")
         if len(posA) == 0:
-            posA.append("1")
+            posA.append("0")
             return posA
         # Odstranime duplikaty
         return list(dict.fromkeys(posA))
@@ -269,23 +284,24 @@ def compareBDD(bdd1, bdd2, text, size):
 
 
 # Metoda na vytvorenie nahodnej boolovskej funkcie
-"""
 def createRandomFunction():
-    velkost = random.randint(1,5)
+    velkost = random.randint(1, 6)
     abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     temp = ""
     cislo = 0
-    for i in range(0, random.randint(0,10)):
+    for i in range(0, random.randint(0, 15)):
         if cislo >= velkost:
             temp += "+"
             cislo = 0
-        if random.randint(0,1)==0:
+        if random.randint(0, 1) == 0:
             temp += "!"
-        cislo = random.randint(cislo,velkost)
+        cislo = random.randint(cislo, velkost)
         temp += abeceda[cislo]
-        cislo+=1
-    return temp
-"""
+        cislo += 1
+    if temp == "":
+        return createRandomFunction()
+    temp = temp.split("+")
+    return list(dict.fromkeys(temp))
 
 
 # Metoda na vytvorenie poradia
@@ -308,6 +324,21 @@ def listToString(fList):
 
 # Zadavame v tvare A!C+ABC+!AB+!BC
 while True:
+
+    while True:
+        bfunkcia = createRandomFunction()
+        poradie = getPoradie(listToString(bfunkcia))
+        bad = BDD(poradie, bfunkcia)
+        bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+        bddroot = BDD(poradie, bfunkcia)
+        bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
+        if compareBDD(bad, bddroot, "", len(poradie)) == False:
+            break
+        else:
+            bddroot.root.display()
+            bddroot.everynumber("", len(poradie), [])
+            input()
+
     bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
     poradie = getPoradie(bfunkcia)
     fList = bfunkcia.split("+")
@@ -316,17 +347,25 @@ while True:
     bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
     bad.root.display()
 
-    print("\n\n\n\n")
+    print("\n")
 
     bddroot = BDD(poradie, fList)
     bddroot.root = bddroot.BDD_create(bddroot.root, poradie, fList)
     bddroot.root.display()
 
+    print(
+        "\nPocet prvkov BDD je:",
+        bddroot.values,
+        "a pocet prvkov neredukovaneho BDD je:",
+        bad.values,
+    )
     if compareBDD(bad, bddroot, "", len(poradie)) == True:
-        print("\n\nHodnoty stromu su rovnake po reduckii")
+        print("Hodnoty stromu su rovnake po reduckii")
     while True:
-        kombinacia = input("\nZadaj kombinaciu alebo stlac enter pre novu funkciu\n")
+        kombinacia = input(
+            "Zadaj kombinaciu pre " + poradie + " alebo stlac enter pre novu funkciu\n"
+        )
         if kombinacia == "":
             break
-        print("Vysledok neredukovaneho stromu: ", bad.badBDD_use(kombinacia))
-        print("Vysledok redukovaneho stromu: ", bddroot.BDD_use(kombinacia))
+        print("Vysledok neredukovaneho stromu:", bad.badBDD_use(kombinacia))
+        print("Vysledok redukovaneho stromu:", bddroot.BDD_use(kombinacia))
