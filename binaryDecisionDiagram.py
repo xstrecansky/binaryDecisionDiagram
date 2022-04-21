@@ -1,4 +1,6 @@
+from itertools import count
 import random
+from typing import Counter
 
 
 # Trieda jednej nody
@@ -284,12 +286,11 @@ def compareBDD(bdd1, bdd2, text, size):
 
 
 # Metoda na vytvorenie nahodnej boolovskej funkcie
-def createRandomFunction():
-    velkost = random.randint(1, 6)
+def createRandomFunction(velkost, dlzka):
     abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     temp = ""
     cislo = 0
-    for i in range(0, random.randint(0, 15)):
+    for i in range(0, random.randint(0, dlzka)):
         if cislo >= velkost:
             temp += "+"
             cislo = 0
@@ -299,7 +300,7 @@ def createRandomFunction():
         temp += abeceda[cislo]
         cislo += 1
     if temp == "":
-        return createRandomFunction()
+        return createRandomFunction(velkost, dlzka)
     temp = temp.split("+")
     return list(dict.fromkeys(temp))
 
@@ -325,18 +326,31 @@ def listToString(fList):
 # Zadavame v tvare A!C+ABC+!AB+!BC
 while True:
 
+    pocet1 = 0
+    pocet2 = 0
+    counter = 0
     while True:
-        bfunkcia = createRandomFunction()
+        bfunkcia = createRandomFunction(5, 15)
         poradie = getPoradie(listToString(bfunkcia))
         bad = BDD(poradie, bfunkcia)
         bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
         bddroot = BDD(poradie, bfunkcia)
         bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
+        pocet1 += bddroot.values
+        pocet2 += bad.values
+        counter += 1
+        print(bfunkcia)
+        print("Pocet neredukovaneho:", pocet1, "Pocet redukovaneho:", pocet2)
+        print(
+            "Redukovany tvar je v priemere: {:.2f}".format(
+                (pocet1 / counter) / ((pocet2 / counter) / 100)
+            ),
+            "%",
+            "z neredukovaneho",
+        )
         if compareBDD(bad, bddroot, "", len(poradie)) == False:
             break
         else:
-            bddroot.root.display()
-            bddroot.everynumber("", len(poradie), [])
             input()
 
     bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
