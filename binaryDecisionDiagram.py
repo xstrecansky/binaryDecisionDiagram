@@ -1,6 +1,4 @@
-from itertools import count
 import random
-from typing import Counter
 
 
 # Trieda jednej nody
@@ -12,7 +10,7 @@ class Node(object):
         # Unikatne id na pocitanie poctu prvkov
         self.id = i
 
-    # Kod prezaty z https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python
+    # Kod prevzaty z https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
@@ -71,15 +69,12 @@ class BDD(object):
         return self.values
 
     # Vypiseme vsetky hodnoty pomocou BDD_use
-    def everynumber(self, text, size, array):
+    def everynumber(self, text, size):
         if len(text) <= size:
-            self.everynumber(text + "0", size, array)
+            self.everynumber(text + "0", size)
             if len(text) == size:
-                array.append(self.BDD_use(text))
-            self.everynumber(text + "1", size, array)
-        if len(text) == size and "0" not in text:
-            print(array)
-            return
+                print(self.BDD_use(text), end="")
+            self.everynumber(text + "1", size)
 
     # Funckia na vytvorenie binarneho diagramu
     # Bez oplimalizacie a odstranenia duplikatov
@@ -225,7 +220,6 @@ def rightString(fList, letter):
     else:
         for item in fList:
             if item.find("!" + letter) == 0:
-                posA.append("")
                 continue
             # Pripad kedy sa nachadza vo funkcii C
             if item.find(letter) == 0 and item[0] != "!":
@@ -235,12 +229,12 @@ def rightString(fList, letter):
             # Ak sa nenachadza C vo funkcii pridame
             if item.find(letter) == -1:
                 posA.append(item)
-        if "" in posA:
-            posA.remove("")
         if len(posA) == 0:
             posA.append("0")
             return posA
         # Odstranime duplikaty
+        if "" in posA:
+            posA.remove("")
         return list(dict.fromkeys(posA))
 
 
@@ -290,7 +284,7 @@ def createRandomFunction(velkost, dlzka):
     abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     temp = ""
     cislo = 0
-    for i in range(0, random.randint(0, dlzka)):
+    for i in range(0, dlzka):
         if cislo >= velkost:
             temp += "+"
             cislo = 0
@@ -299,8 +293,6 @@ def createRandomFunction(velkost, dlzka):
         cislo = random.randint(cislo, velkost)
         temp += abeceda[cislo]
         cislo += 1
-    if temp == "":
-        return createRandomFunction(velkost, dlzka)
     temp = temp.split("+")
     return list(dict.fromkeys(temp))
 
@@ -325,12 +317,12 @@ def listToString(fList):
 
 # Zadavame v tvare A!C+ABC+!AB+!BC
 while True:
-
+    """
     pocet1 = 0
     pocet2 = 0
     counter = 0
     while True:
-        bfunkcia = createRandomFunction(5, 15)
+        bfunkcia = createRandomFunction(random.randint(0,5), random.randint(0,15))
         poradie = getPoradie(listToString(bfunkcia))
         bad = BDD(poradie, bfunkcia)
         bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
@@ -348,11 +340,12 @@ while True:
             "%",
             "z neredukovaneho",
         )
+        bddroot.root.display()
         if compareBDD(bad, bddroot, "", len(poradie)) == False:
             break
         else:
             input()
-
+    """
     bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
     poradie = getPoradie(bfunkcia)
     fList = bfunkcia.split("+")
@@ -366,6 +359,9 @@ while True:
     bddroot = BDD(poradie, fList)
     bddroot.root = bddroot.BDD_create(bddroot.root, poradie, fList)
     bddroot.root.display()
+
+    print("\nVysledna kombinacia:", end=" ")
+    bddroot.everynumber("", len(poradie))
 
     print(
         "\nPocet prvkov BDD je:",
