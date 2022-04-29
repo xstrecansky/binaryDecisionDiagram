@@ -320,37 +320,39 @@ def listToString(fList):
 
 
 # Zadavame v tvare A!C+ABC+!AB+!BC
+pocet1 = 0
+pocet2 = 0
+counter = 0
 while True:
-    bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
-    poradie = getPoradie(bfunkcia)
-    fList = bfunkcia.split("+")
 
-    bad = BDD(poradie, fList)
+    bfunkcia = createRandomFunction(random.randint(0, 25), random.randint(0, 15))
+    poradie = getPoradie(listToString(bfunkcia))
+    bad = BDD(poradie, bfunkcia)
     bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
-    bad.root.display()
+    bddroot = BDD(poradie, bfunkcia)
+    bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
+    pocet1 += bddroot.values
+    pocet2 += bad.values
+    counter += 1
+    # bddroot.root.display()
 
-    print("\n")
+    # Vypiseme B-funkciu vyslednu kombinaciu BDD,
+    # porovnanie poctu prvkov redukovaneho a neredukovaneho
+    # porovnanie vsetkych prvkov ci sa rovnaju pred aj po redukcii
 
-    bddroot = BDD(poradie, fList)
-    bddroot.root = bddroot.BDD_create(bddroot.root, poradie, fList)
-    bddroot.root.display()
-
-    print("\nVysledna kombinacia:", end=" ")
+    print(bfunkcia)
+    print("Vysledna kombinacia:", end=" ")
     bddroot.everynumber("", len(poradie))
-
+    print("\nPocet neredukovaneho:", pocet1, "Pocet redukovaneho:", pocet2)
     print(
-        "\nPocet prvkov BDD je:",
-        bddroot.values,
-        "a pocet prvkov neredukovaneho BDD je:",
-        bad.values,
+        "Redukovany tvar je v priemere: {:.2f}".format(
+            (pocet1 / counter) / ((pocet2 / counter) / 100)
+        ),
+        "%",
+        "z neredukovaneho",
     )
-    if compareBDD(bad, bddroot, "", len(poradie)) == True:
-        print("Hodnoty stromu su rovnake po reduckii")
-    while True:
-        kombinacia = input(
-            "Zadaj kombinaciu pre " + poradie + " alebo stlac enter pre novu funkciu\n"
-        )
-        if kombinacia == "":
-            break
-        print("Vysledok neredukovaneho stromu:", bad.badBDD_use(kombinacia))
-        print("Vysledok redukovaneho stromu:", bddroot.BDD_use(kombinacia))
+
+    if compareBDD(bad, bddroot, "", len(poradie)) == False:
+        break
+    else:
+        input()
