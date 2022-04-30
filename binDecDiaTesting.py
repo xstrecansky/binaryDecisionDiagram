@@ -1,5 +1,5 @@
 import random
-
+import time
 
 # Trieda jednej nody
 class Node(object):
@@ -320,39 +320,58 @@ def listToString(fList):
 
 
 # Zadavame v tvare A!C+ABC+!AB+!BC
-pocet1 = 0
-pocet2 = 0
-counter = 0
-while True:
+def main():
+    pocet1 = 0
+    pocet2 = 0
+    counter = 0
+    while True:
+        velkost = random.randint(0, 25)
+        dlzka = random.randint(1, 25)
 
-    bfunkcia = createRandomFunction(random.randint(0, 25), random.randint(0, 15))
-    poradie = getPoradie(listToString(bfunkcia))
-    bad = BDD(poradie, bfunkcia)
-    bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
-    bddroot = BDD(poradie, bfunkcia)
-    bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
-    pocet1 += bddroot.values
-    pocet2 += bad.values
-    counter += 1
-    # bddroot.root.display()
+        bfunkcia = createRandomFunction(velkost, dlzka)
+        poradie = getPoradie(listToString(bfunkcia))
+        bad = BDD(poradie, bfunkcia)
+        bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+        bddroot = BDD(poradie, bfunkcia)
 
-    # Vypiseme B-funkciu vyslednu kombinaciu BDD,
-    # porovnanie poctu prvkov redukovaneho a neredukovaneho
-    # porovnanie vsetkych prvkov ci sa rovnaju pred aj po redukcii
+        start_time = time.time()
+        bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
+        end_time = time.time()
 
-    print(bfunkcia)
-    print("Vysledna kombinacia:", end=" ")
-    bddroot.everynumber("", len(poradie))
-    print("\nPocet neredukovaneho:", pocet1, "Pocet redukovaneho:", pocet2)
-    print(
-        "Redukovany tvar je v priemere: {:.2f}".format(
-            (pocet1 / counter) / ((pocet2 / counter) / 100)
-        ),
-        "%",
-        "z neredukovaneho",
-    )
+        pocet1 += bddroot.values
+        pocet2 += bad.values
+        counter += 1
 
-    if compareBDD(bad, bddroot, "", len(poradie)) == False:
-        break
-    else:
-        input()
+        # Vypiseme B-funkciu vyslednu kombinaciu BDD,
+        # porovnanie poctu prvkov redukovaneho a neredukovaneho
+        # porovnanie vsetkych prvkov ci sa rovnaju pred aj po redukcii
+
+        print(bfunkcia)
+
+        # print("Vysledna kombinacia:", end=" ")
+        # bddroot.everynumber("", len(poradie))
+        # print()
+
+        print(
+            "Vytvorenie redukovaneho BDD: {:.6f}".format(end_time - start_time),
+            "pre poradie dlzky:",
+            (len(poradie)),
+        )
+        print(
+            "Pocet neredukovaneho:", bddroot.values, "Pocet redukovaneho:", bad.values
+        )
+        print(
+            "Redukovany tvar je v priemere: {:.2f}".format(
+                (pocet1 / counter) / ((pocet2 / counter) / 100)
+            ),
+            "%",
+            "z neredukovaneho",
+        )
+
+        if compareBDD(bad, bddroot, "", len(poradie)) == False:
+            break
+        else:
+            input()
+
+
+main()
