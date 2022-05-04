@@ -1,5 +1,8 @@
 import random
+from sys import maxsize
 import time
+import tracemalloc
+
 
 # Trieda jednej nody
 class Node(object):
@@ -76,21 +79,33 @@ class BDD(object):
                 print(self.BDD_use(text), end="")
             self.everynumber(text + "1", size)
 
+    def badeverynumber(self, text, size):
+        if len(text) <= size:
+            self.badeverynumber(text + "0", size)
+            if len(text) == size:
+                print(self.badBDD_use(text), end="")
+            self.badeverynumber(text + "1", size)
+
     # Funckia na vytvorenie binarneho diagramu
     # Bez oplimalizacie a odstranenia duplikatov
     def BDD_createWithDuplicates(self, root, poradie):
+        if ("0" in root.value) or ("1" in root.value):
+            return root
         if poradie:
             root.left = Node(leftString(root.value, poradie[0]), self.incValues(1))
             root.left = self.BDD_createWithDuplicates(root.left, poradie[1:])
             root.right = Node(rightString(root.value, poradie[0]), self.incValues(1))
             root.right = self.BDD_createWithDuplicates(root.right, poradie[1:])
-            return root
         return root
 
     # Vyhladavanie pre neoptimalizovany BDD
     def badBDD_use(self, combination):
         tempRoot = self.root
         for letter in combination:
+            if "1" in tempRoot.value:
+                return "1"
+            if "0" in tempRoot.value:
+                return "0"
             if letter == "0":
                 tempRoot = tempRoot.left
             elif letter == "1":
@@ -150,13 +165,10 @@ class BDD(object):
                         root.right = self.BDD_create(root.right, poradie[1:], tempRight)
             # Na konci sa pozrieme na rovnake hodnoty v jednej node
             # Ak sa obe rovnaju 1 alebo 0 nemusime zapisovat aktualnu nodu
-            """
             if "0" not in root.value and "1" not in root.value:
                 if root.left.value == root.right.value:
-                    if "0" in root.left.value or "1" in root.left.value:
-                        root = root.left
-                        self.incValues(-1)
-            """
+                    root = root.left
+                    self.incValues(-1)
         return root
 
     # Metoda pre vypis vysledku
@@ -271,14 +283,20 @@ def print2DUtil(root, space):
 
 
 # Metoda na porovnanie hodnot dvoch BDD
-def compareBDD(bdd1, bdd2, text, size):
-    if len(text) <= size:
-        compareBDD(bdd1, bdd2, text + "0", size)
-        if len(text) == size:
-            if bdd1.badBDD_use(text) != bdd2.BDD_use(text):
-                return False
-        compareBDD(bdd1, bdd2, text + "1", size)
+def compareBDD(bdd1, bdd2, array):
+    for item in array:
+        if bdd1.badBDD_use(item) != bdd2.BDD_use(item):
+            return False
     return True
+
+
+def createCombinations(text, size, array):
+    if len(text) <= size:
+        createCombinations(text + "0", size, array)
+        if len(text) == size:
+            array.append(text)
+        createCombinations(text + "1", size, array)
+    return array
 
 
 # Metoda na vytvorenie nahodnej boolovskej funkcie
@@ -286,27 +304,31 @@ def createRandomFunction(velkost, dlzka):
     abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     temp = ""
     cislo = 0
-    for i in range(0, dlzka):
-        if cislo >= velkost:
+    i = 0
+    while i < dlzka:
+        if cislo >= velkost - 1:
             temp += "+"
             cislo = 0
-        if random.randint(0, 1) == 0:
+        if random.randint(0, 2) == 0:
             temp += "!"
-        cislo = random.randint(cislo, velkost)
+        cislo = random.randint(cislo, velkost - 1)
         temp += abeceda[cislo]
         cislo += 1
-    temp = temp.split("+")
-    if "" in temp:
-        temp.remove("")
-    return list(dict.fromkeys(temp))
+        i += 1
+    for j in range(0, velkost - 1):
+        if abeceda[j] not in temp:
+            if random.randint(0, 1) == 0:
+                temp += "!"
+            temp += abeceda[j]
+    return temp
 
 
 # Metoda na vytvorenie poradia
-def getPoradie(bfunckia):
+def getPoradie(bfunkcia):
     abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     poradie = ""
     for pismeno in abeceda:
-        if pismeno in bfunckia:
+        if pismeno in bfunkcia:
             poradie += pismeno
     return poradie
 
@@ -321,37 +343,93 @@ def listToString(fList):
 
 # Zadavame v tvare A!C+ABC+!AB+!BC
 def main():
-    pocet1 = 0
-    pocet2 = 0
-    counter = 0
-    while True:
-        velkost = random.randint(0, 25)
-        dlzka = random.randint(1, 25)
+    for velkost in range(5, 16):
+        pocet1 = 0
+        pocet2 = 0
+        timecounter = 0
+        testtimecounter = 0
+        for j in range(0, 251):
+            dlzka = velkost * 2
+            temp = createRandomFunction(velkost, dlzka)
+            bfunkcia = temp.split("+")
+            poradie = getPoradie(temp)
 
-        bfunkcia = createRandomFunction(velkost, dlzka)
-        poradie = getPoradie(listToString(bfunkcia))
+            tracemalloc.start()
+            start_time = time.time()
+            good = BDD(poradie, bfunkcia)
+            good.root = good.BDD_create(good.root, poradie, bfunkcia)
+            maxsize += tracemalloc.get_traced_memory()[0]
+            end_time = time.time()
+            tracemalloc.stop()
+
+            bad = BDD(poradie, bfunkcia)
+            bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+
+            temp = createCombinations("", velkost, [])
+            test_start_time = time.time()
+            for item in temp:
+                good.BDD_use(item)
+            test_end_time = time.time()
+
+            pocet1 += good.values
+            pocet2 += bad.values
+            timecounter += end_time - start_time
+            testtimecounter += test_end_time - test_start_time
+
+        print(
+            "Vytvorenie 250 redukovanych stromov pre:",
+            str(velkost),
+            " pismen je v priemere:\n",
+            timecounter / 250,
+            "\nTestovanie vsetkych hodnot je v priemere\n",
+            testtimecounter / 250,
+            "\nMiera zredukovanie je",
+            str((pocet1 / 250) / ((pocet2 / 250) / 100)),
+            "\nVyuzitie pamati je",
+            str(maxsize / 250),
+            "\n\n",
+        )
+
+    """
+    pocet1 = []
+    pocet2 = []
+    counter = []
+    # Vytvorime si 3 polia, ktore budeme porovnavat a nastavime ich hodnoty na 0
+    for k in range(0, 25):
+        pocet1.append(0)
+        pocet2.append(0)
+        counter.append(0)
+    while True:
+        # Velkost urcuje maximalny pocet roznych pismen vo funkcii
+        velkost = random.randint(1,26)
+        # Dlzka urcuje dlzku funkcie
+        dlzka = 20
+
+        temp = createRandomFunction(velkost, dlzka)
+        print(temp)
+        poradie = getPoradie(temp)
+        bfunkcia = temp.split("+")
+
         bad = BDD(poradie, bfunkcia)
         bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
-        bddroot = BDD(poradie, bfunkcia)
 
+        bddroot = BDD(poradie, bfunkcia)
         start_time = time.time()
         bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
         end_time = time.time()
 
-        pocet1 += bddroot.values
-        pocet2 += bad.values
-        counter += 1
+        pocet1[velkost] += bddroot.values
+        pocet2[velkost] += bad.values
+        counter[velkost] += 1
 
         # Vypiseme B-funkciu vyslednu kombinaciu BDD,
         # porovnanie poctu prvkov redukovaneho a neredukovaneho
         # porovnanie vsetkych prvkov ci sa rovnaju pred aj po redukcii
 
-        print(bfunkcia)
-
         # print("Vysledna kombinacia:", end=" ")
         # bddroot.everynumber("", len(poradie))
         # print()
-
+        
         print(
             "Vytvorenie redukovaneho BDD: {:.6f}".format(end_time - start_time),
             "pre poradie dlzky:",
@@ -362,16 +440,17 @@ def main():
         )
         print(
             "Redukovany tvar je v priemere: {:.2f}".format(
-                (pocet1 / counter) / ((pocet2 / counter) / 100)
+                (pocet1[velkost] / counter[velkost]) / ((pocet2[velkost] / counter[velkost]) / 100)
             ),
             "%",
             "z neredukovaneho",
         )
 
-        if compareBDD(bad, bddroot, "", len(poradie)) == False:
+        if compareBDD(bad, bddroot, createCombinations("", len(poradie), [])) == False:
             break
         else:
             input()
+    """
 
 
 main()

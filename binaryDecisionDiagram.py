@@ -76,21 +76,33 @@ class BDD(object):
                 print(self.BDD_use(text), end="")
             self.everynumber(text + "1", size)
 
+    def badeverynumber(self, text, size):
+        if len(text) <= size:
+            self.badeverynumber(text + "0", size)
+            if len(text) == size:
+                print(self.badBDD_use(text), end="")
+            self.badeverynumber(text + "1", size)
+
     # Funckia na vytvorenie binarneho diagramu
     # Bez oplimalizacie a odstranenia duplikatov
     def BDD_createWithDuplicates(self, root, poradie):
+        if ("0" in root.value) or ("1" in root.value):
+            return root
         if poradie:
             root.left = Node(leftString(root.value, poradie[0]), self.incValues(1))
             root.left = self.BDD_createWithDuplicates(root.left, poradie[1:])
             root.right = Node(rightString(root.value, poradie[0]), self.incValues(1))
             root.right = self.BDD_createWithDuplicates(root.right, poradie[1:])
-            return root
         return root
 
     # Vyhladavanie pre neoptimalizovany BDD
     def badBDD_use(self, combination):
         tempRoot = self.root
         for letter in combination:
+            if "1" in tempRoot.value:
+                return "1"
+            if "0" in tempRoot.value:
+                return "0"
             if letter == "0":
                 tempRoot = tempRoot.left
             elif letter == "1":
@@ -150,13 +162,10 @@ class BDD(object):
                         root.right = self.BDD_create(root.right, poradie[1:], tempRight)
             # Na konci sa pozrieme na rovnake hodnoty v jednej node
             # Ak sa obe rovnaju 1 alebo 0 nemusime zapisovat aktualnu nodu
-            """
             if "0" not in root.value and "1" not in root.value:
                 if root.left.value == root.right.value:
-                    if "0" in root.left.value or "1" in root.left.value:
-                        root = root.left
-                        self.incValues(-1)
-            """
+                    root = root.left
+                    self.incValues(-1)
         return root
 
     # Metoda pre vypis vysledku
@@ -271,43 +280,31 @@ def print2DUtil(root, space):
 
 
 # Metoda na porovnanie hodnot dvoch BDD
-def compareBDD(bdd1, bdd2, text, size):
-    if len(text) <= size:
-        compareBDD(bdd1, bdd2, text + "0", size)
-        if len(text) == size:
-            if bdd1.badBDD_use(text) != bdd2.BDD_use(text):
-                return False
-        compareBDD(bdd1, bdd2, text + "1", size)
+def compareBDD(bdd1, bdd2, array):
+    for item in array:
+        if bdd1.badBDD_use(item) != bdd2.BDD_use(item):
+            return False
     return True
 
 
-# Metoda na vytvorenie nahodnej boolovskej funkcie
-def createRandomFunction(velkost, dlzka):
-    abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    temp = ""
-    cislo = 0
-    for i in range(0, dlzka):
-        if cislo >= velkost:
-            temp += "+"
-            cislo = 0
-        if random.randint(0, 1) == 0:
-            temp += "!"
-        cislo = random.randint(cislo, velkost)
-        temp += abeceda[cislo]
-        cislo += 1
-    temp = temp.split("+")
-    if "" in temp:
-        temp.remove("")
-    return list(dict.fromkeys(temp))
+def createCombinations(text, size, array):
+    if len(text) <= size:
+        createCombinations(text + "0", size, array)
+        if len(text) == size:
+            array.append(text)
+        createCombinations(text + "1", size, array)
+    return array
 
 
 # Metoda na vytvorenie poradia
-def getPoradie(bfunckia):
+def getPoradie(bfunkcia):
     abeceda = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     poradie = ""
     for pismeno in abeceda:
-        if pismeno in bfunckia:
+        if pismeno in bfunkcia:
             poradie += pismeno
+        else:
+            return poradie
     return poradie
 
 
@@ -319,38 +316,48 @@ def listToString(fList):
     return s
 
 
-# Zadavame v tvare A!C+ABC+!AB+!BC
-while True:
-    bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
-    poradie = getPoradie(bfunkcia)
-    fList = bfunkcia.split("+")
-
-    bad = BDD(poradie, fList)
-    bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
-    bad.root.display()
-
-    print("\n")
-
-    bddroot = BDD(poradie, fList)
-    bddroot.root = bddroot.BDD_create(bddroot.root, poradie, fList)
-    bddroot.root.display()
-
-    print("\nVysledna kombinacia:", end=" ")
-    bddroot.everynumber("", len(poradie))
-
-    print(
-        "\nPocet prvkov BDD je:",
-        bddroot.values,
-        "a pocet prvkov neredukovaneho BDD je:",
-        bad.values,
-    )
-    if compareBDD(bad, bddroot, "", len(poradie)) == True:
-        print("Hodnoty stromu su rovnake po reduckii")
+def main():
+    # Zadavame v tvare A!C+ABC+!AB+!BC
     while True:
-        kombinacia = input(
-            "Zadaj kombinaciu pre " + poradie + " alebo stlac enter pre novu funkciu\n"
+        bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
+        poradie = getPoradie(bfunkcia)
+        fList = bfunkcia.split("+")
+
+        bad = BDD(poradie, fList)
+        bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+        bad.root.display()
+
+        print("\n")
+
+        bddroot = BDD(poradie, fList)
+        bddroot.root = bddroot.BDD_create(bddroot.root, poradie, fList)
+        bddroot.root.display()
+
+        print("\nVysledna kombinacia neredukovaneho:", end=" ")
+        bad.badeverynumber("", len(poradie))
+        print("\nVysledna kombinacia:\t\t   ", end=" ")
+        bddroot.everynumber("", len(poradie))
+
+        print(
+            "\nPocet prvkov BDD je:",
+            bddroot.values,
+            "a pocet prvkov neredukovaneho BDD je:",
+            bad.values,
         )
-        if kombinacia == "":
-            break
-        print("Vysledok neredukovaneho stromu:", bad.badBDD_use(kombinacia))
-        print("Vysledok redukovaneho stromu:", bddroot.BDD_use(kombinacia))
+        if compareBDD(bad, bddroot, createCombinations("", len(poradie), [])) != False:
+            print("Hodnoty stromu su rovnake po reduckii")
+        else:
+            print("Hodnoty stromu nie su rovnake po reduckii")
+        while True:
+            kombinacia = input(
+                "Zadaj kombinaciu pre "
+                + poradie
+                + " alebo stlac enter pre novu funkciu\n"
+            )
+            if kombinacia == "":
+                break
+            print("Vysledok neredukovaneho stromu:", bad.badBDD_use(kombinacia))
+            print("Vysledok redukovaneho stromu:", bddroot.BDD_use(kombinacia))
+
+
+main()
