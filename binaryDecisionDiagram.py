@@ -314,13 +314,45 @@ def listToString(fList):
     return s
 
 
+def DNFtoVector(temp, poradie):
+    combinations = createCombinations("", len(poradie), [])
+    vector = ""
+    for combination in combinations:
+        bfunkcia = temp
+        for i in range(0, len(combination)):
+            pismeno = poradie[i]
+            if pismeno not in bfunkcia:
+                continue
+            if ("!" + pismeno) in bfunkcia:
+                if combination[i] == "0":
+                    bfunkcia = bfunkcia.replace("!" + pismeno, "1")
+                else:
+                    bfunkcia = bfunkcia.replace("!" + pismeno, "0")
+            if pismeno in bfunkcia:
+                if combination[i] == "0":
+                    bfunkcia = bfunkcia.replace(pismeno, "0")
+                else:
+                    bfunkcia = bfunkcia.replace(pismeno, "1")
+        fList = bfunkcia.split("+")
+        counter = 0
+        for item in fList:
+            if "0" in item:
+                counter += 1
+        if counter == len(fList):
+            vector += "0"
+        else:
+            vector += "1"
+    return vector
+
+
 def main():
     # Zadavame v tvare A!C+ABC+!AB+!BC
-    # A+!BC+BC+D!F
     while True:
         bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
         poradie = getPoradie(bfunkcia)
         fList = bfunkcia.split("+")
+
+        print(DNFtoVector(bfunkcia, poradie))
 
         bad = BDD(poradie, fList)
         bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
@@ -332,7 +364,8 @@ def main():
         bddroot.root = bddroot.BDD_create(bddroot.root, poradie, fList)
         bddroot.root.display()
 
-        print("\nVysledna kombinacia neredukovaneho:", end=" ")
+        print("\nVysledna kombinacia cez vektor je: ", DNFtoVector(bfunkcia, poradie))
+        print("Vysledna kombinacia neredukovaneho:", end=" ")
         bad.badeverynumber("", len(poradie))
         print("\nVysledna kombinacia:\t\t   ", end=" ")
         bddroot.everynumber("", len(poradie))

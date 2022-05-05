@@ -314,8 +314,12 @@ def createRandomFunction(velkost, dlzka):
         temp += abeceda[cislo]
         cislo += 1
         i += 1
+    plus = False
     for j in range(0, velkost - 1):
         if abeceda[j] not in temp:
+            if plus == False:
+                temp += "+"
+                plus = True
             if random.randint(0, 1) == 0:
                 temp += "!"
             temp += abeceda[j]
@@ -340,6 +344,37 @@ def listToString(fList):
     return s
 
 
+def DNFtoVector(temp, poradie):
+    combinations = createCombinations("", len(poradie), [])
+    vector = ""
+    for combination in combinations:
+        bfunkcia = temp
+        for i in range(0, len(combination)):
+            pismeno = poradie[i]
+            if pismeno not in bfunkcia:
+                continue
+            if ("!" + pismeno) in bfunkcia:
+                if combination[i] == "0":
+                    bfunkcia = bfunkcia.replace("!" + pismeno, "1")
+                else:
+                    bfunkcia = bfunkcia.replace("!" + pismeno, "0")
+            if pismeno in bfunkcia:
+                if combination[i] == "0":
+                    bfunkcia = bfunkcia.replace(pismeno, "0")
+                else:
+                    bfunkcia = bfunkcia.replace(pismeno, "1")
+        fList = bfunkcia.split("+")
+        counter = 0
+        for item in fList:
+            if "0" in item:
+                counter += 1
+        if counter == len(fList):
+            vector += "0"
+        else:
+            vector += "1"
+    return vector
+
+
 # Zadavame v tvare A!C+ABC+!AB+!BC
 def main():
     print()
@@ -351,9 +386,10 @@ def main():
         maxsize = 0
         for j in range(0, 251):
             dlzka = velkost * 2
-            temp = createRandomFunction(velkost, dlzka)
-            bfunkcia = temp.split("+")
-            poradie = getPoradie(temp)
+            tempf = createRandomFunction(velkost, dlzka)
+            bfunkcia = tempf.split("+")
+
+            poradie = getPoradie(tempf)
 
             tracemalloc.start()
             start_time = time.time()
@@ -366,10 +402,23 @@ def main():
             bad = BDD(poradie, bfunkcia)
             bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
 
-            temp = createCombinations("", velkost, [])
+            temp = createCombinations("", len(poradie), [])
             test_start_time = time.time()
+            vysledok = ""
             for item in temp:
-                good.BDD_use(item)
+                vysledok += good.BDD_use(item)
+            if vysledok != (DNFtoVector(tempf, poradie)):
+                print(len(temp), temp)
+                print(tempf)
+                print(
+                    vysledok + " != " + DNFtoVector(tempf, poradie),
+                    len(vysledok),
+                    len(DNFtoVector(tempf, poradie)),
+                )
+
+                print("Chyba")
+                return
+
             test_end_time = time.time()
 
             pocet1 += good.values
@@ -378,9 +427,9 @@ def main():
             testtimecounter += test_end_time - test_start_time
 
         print(
-            "Vytvorenie 250 redukovanych stromov pre:",
+            "Vytvorenie redukovaneho stromu pre:",
             (str(velkost)),
-            "pismen je v priemere: {:.6f}".format(timecounter / 250),
+            "pismen je v priemere:      {:.6f}".format(timecounter / 250),
             "sekund",
             "\nTestovanie vsetkych hodnot je v priemere:  \t\t\t {:.6f}".format(
                 testtimecounter / 250
