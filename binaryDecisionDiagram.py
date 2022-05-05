@@ -303,8 +303,6 @@ def getPoradie(bfunkcia):
     for pismeno in abeceda:
         if pismeno in bfunkcia:
             poradie += pismeno
-        else:
-            return poradie
     return poradie
 
 
@@ -318,6 +316,7 @@ def listToString(fList):
 
 def main():
     # Zadavame v tvare A!C+ABC+!AB+!BC
+    # A+!BC+BC+D!F
     while True:
         bfunkcia = input("Zadaj funkciu v DNF, poradie je zoradene podla abecedy:\n")
         poradie = getPoradie(bfunkcia)

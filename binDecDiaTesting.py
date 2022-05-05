@@ -1,5 +1,4 @@
 import random
-from sys import maxsize
 import time
 import tracemalloc
 
@@ -343,11 +342,13 @@ def listToString(fList):
 
 # Zadavame v tvare A!C+ABC+!AB+!BC
 def main():
+    print()
     for velkost in range(5, 16):
         pocet1 = 0
         pocet2 = 0
         timecounter = 0
         testtimecounter = 0
+        maxsize = 0
         for j in range(0, 251):
             dlzka = velkost * 2
             temp = createRandomFunction(velkost, dlzka)
@@ -358,7 +359,7 @@ def main():
             start_time = time.time()
             good = BDD(poradie, bfunkcia)
             good.root = good.BDD_create(good.root, poradie, bfunkcia)
-            maxsize += tracemalloc.get_traced_memory()[0]
+            maxsize += int(tracemalloc.get_traced_memory()[1])
             end_time = time.time()
             tracemalloc.stop()
 
@@ -378,79 +379,21 @@ def main():
 
         print(
             "Vytvorenie 250 redukovanych stromov pre:",
-            str(velkost),
-            " pismen je v priemere:\n",
-            timecounter / 250,
-            "\nTestovanie vsetkych hodnot je v priemere\n",
-            testtimecounter / 250,
-            "\nMiera zredukovanie je",
-            str((pocet1 / 250) / ((pocet2 / 250) / 100)),
-            "\nVyuzitie pamati je",
-            str(maxsize / 250),
-            "\n\n",
-        )
-
-    """
-    pocet1 = []
-    pocet2 = []
-    counter = []
-    # Vytvorime si 3 polia, ktore budeme porovnavat a nastavime ich hodnoty na 0
-    for k in range(0, 25):
-        pocet1.append(0)
-        pocet2.append(0)
-        counter.append(0)
-    while True:
-        # Velkost urcuje maximalny pocet roznych pismen vo funkcii
-        velkost = random.randint(1,26)
-        # Dlzka urcuje dlzku funkcie
-        dlzka = 20
-
-        temp = createRandomFunction(velkost, dlzka)
-        print(temp)
-        poradie = getPoradie(temp)
-        bfunkcia = temp.split("+")
-
-        bad = BDD(poradie, bfunkcia)
-        bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
-
-        bddroot = BDD(poradie, bfunkcia)
-        start_time = time.time()
-        bddroot.root = bddroot.BDD_create(bddroot.root, poradie, bfunkcia)
-        end_time = time.time()
-
-        pocet1[velkost] += bddroot.values
-        pocet2[velkost] += bad.values
-        counter[velkost] += 1
-
-        # Vypiseme B-funkciu vyslednu kombinaciu BDD,
-        # porovnanie poctu prvkov redukovaneho a neredukovaneho
-        # porovnanie vsetkych prvkov ci sa rovnaju pred aj po redukcii
-
-        # print("Vysledna kombinacia:", end=" ")
-        # bddroot.everynumber("", len(poradie))
-        # print()
-        
-        print(
-            "Vytvorenie redukovaneho BDD: {:.6f}".format(end_time - start_time),
-            "pre poradie dlzky:",
-            (len(poradie)),
-        )
-        print(
-            "Pocet neredukovaneho:", bddroot.values, "Pocet redukovaneho:", bad.values
-        )
-        print(
-            "Redukovany tvar je v priemere: {:.2f}".format(
-                (pocet1[velkost] / counter[velkost]) / ((pocet2[velkost] / counter[velkost]) / 100)
+            (str(velkost)),
+            "pismen je v priemere: {:.6f}".format(timecounter / 250),
+            "sekund",
+            "\nTestovanie vsetkych hodnot je v priemere:  \t\t\t {:.6f}".format(
+                testtimecounter / 250
+            ),
+            "sekund",
+            "\nMiera zredukovanie je: \t\t\t\t\t\t {:.3f}".format(
+                ((pocet1 / 250) / ((pocet2 / 250) / 100))
             ),
             "%",
-            "z neredukovaneho",
+            "\nVyuzitie pamati je v priemere: \t\t\t\t\t {:.0f}".format(maxsize / 250),
+            "KiB",
+            "\n\n",
         )
-
-        if compareBDD(bad, bddroot, createCombinations("", len(poradie), [])) == False:
-            break
-        else:
-            input()
-    """
 
 
 main()
