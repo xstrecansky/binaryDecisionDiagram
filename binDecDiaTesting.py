@@ -388,39 +388,35 @@ def main():
             dlzka = velkost * 2
             tempf = createRandomFunction(velkost, dlzka)
             bfunkcia = tempf.split("+")
-
             poradie = getPoradie(tempf)
 
+            bad = BDD(poradie, bfunkcia)
+            bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+            # Zacneme meriat vyuzitie pamate
             tracemalloc.start()
             start_time = time.time()
+            # Zacneme meriat cas
             good = BDD(poradie, bfunkcia)
+            # Vytvorime redukovany strom a zapiseme maximalne vyuzitie pamate a casu
             good.root = good.BDD_create(good.root, poradie, bfunkcia)
             maxsize += int(tracemalloc.get_traced_memory()[1])
             end_time = time.time()
             tracemalloc.stop()
-
-            bad = BDD(poradie, bfunkcia)
-            bad.root = bad.BDD_createWithDuplicates(bad.root, poradie)
+            # Vytvorime vektor
+            vektor = DNFtoVector(tempf, poradie)
 
             temp = createCombinations("", len(poradie), [])
+            # Vytvorime si vysledny vektor cez dekompoziciu a porovnavame s vytvorenym vektorom
             test_start_time = time.time()
             vysledok = ""
             for item in temp:
                 vysledok += good.BDD_use(item)
-            if vysledok != (DNFtoVector(tempf, poradie)):
-                print(len(temp), temp)
-                print(tempf)
-                print(
-                    vysledok + " != " + DNFtoVector(tempf, poradie),
-                    len(vysledok),
-                    len(DNFtoVector(tempf, poradie)),
-                )
-
+            test_end_time = time.time()
+            # Ak sa vysledky nerovnaju vypiseme chybu
+            if vysledok != vektor:
                 print("Chyba")
                 return
-
-            test_end_time = time.time()
-
+            # Pripocitame hodnoty
             pocet1 += good.values
             pocet2 += bad.values
             timecounter += end_time - start_time
@@ -429,19 +425,18 @@ def main():
         print(
             "Vytvorenie redukovaneho stromu pre:",
             (str(velkost)),
-            "pismen je v priemere:      {:.6f}".format(timecounter / 250),
+            "pismen je v priemere:\t{:.6f}".format(timecounter / 250),
             "sekund",
-            "\nTestovanie vsetkych hodnot je v priemere:  \t\t\t {:.6f}".format(
+            "\nTestovanie vsetkych hodnot je v priemere:\t\t\t{:.6f}".format(
                 testtimecounter / 250
             ),
             "sekund",
-            "\nMiera zredukovanie je: \t\t\t\t\t\t {:.3f}".format(
-                ((pocet1 / 250) / ((pocet2 / 250) / 100))
+            "\nMiera zredukovanie je:\t\t\t\t\t\t{:.3f}".format(
+                (100 - ((pocet1) / ((pocet2) / 100)))
             ),
             "%",
-            "\nVyuzitie pamati je v priemere: \t\t\t\t\t {:.0f}".format(maxsize / 250),
-            "KiB",
-            "\n\n",
+            "\nVyuzitie pamati je v priemere:\t\t\t\t\t{:.0f}".format(maxsize / 250),
+            "KiB\n\n",
         )
 
 
